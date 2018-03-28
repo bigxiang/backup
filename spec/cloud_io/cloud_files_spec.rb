@@ -503,13 +503,27 @@ module Backup
         end
 
         it "creates containers once with retries" do
+          connection.expects(:get_container).twice
+            .with("my_container").raises(Fog::Storage::Rackspace::NotFound)
           connection.expects(:put_container).twice
             .with("my_container")
+          connection.expects(:get_container).twice
+            .with("my_segments_container").raises(Fog::Storage::Rackspace::NotFound)
           connection.expects(:put_container).twice
             .with("my_segments_container")
             .raises("error").then.returns(nil)
 
           cloud_io.send(:create_containers)
+          cloud_io.send(:create_containers)
+        end
+
+        it 'does not create containers if containers exist' do
+          connection.expects(:get_container)
+            .with("my_container")
+
+          connection.expects(:get_container)
+            .with("my_segments_container")
+
           cloud_io.send(:create_containers)
         end
       end
@@ -527,11 +541,20 @@ module Backup
         end
 
         it "creates containers once with retries" do
+          connection.expects(:get_container).twice
+            .with("my_container").raises(Fog::Storage::Rackspace::NotFound)
           connection.expects(:put_container).twice
             .with("my_container")
             .raises("error").then.returns(nil)
 
           cloud_io.send(:create_containers)
+          cloud_io.send(:create_containers)
+        end
+
+        it 'does not create containers if containers exist' do
+          connection.expects(:get_container)
+            .with("my_container")
+
           cloud_io.send(:create_containers)
         end
       end

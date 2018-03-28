@@ -155,8 +155,11 @@ module Backup
         @containers_created = true
 
         with_retries("Create Containers") do
-          connection.put_container(container)
-          connection.put_container(segments_container) if segments_container
+          connection.put_container(container) unless container_exists?(container)
+
+          if segments_container && !container_exists?(segments_container)
+            connection.put_container(segments_container)
+          end
         end
       end
 
@@ -266,6 +269,13 @@ module Backup
           e.g. split_into_chunks_of #{mb * 1000} (#segment_size * 1000)
         EOS
         1024**2 * mb
+      end
+
+      def container_exists?(container)
+        connection.get_container(container)
+        true
+      rescue Fog::Storage::Rackspace::NotFound => _e
+        false
       end
 
       class Object
